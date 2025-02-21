@@ -12,7 +12,9 @@ type Message struct {
 
 type Input struct {
 	//Prompt   string       `json:"prompt"`
-	Messages []Message `json:"messages"`
+	Messages  []Message         `json:"messages"`
+	MemoryId  *string           `json:"memory_id,omitempty"`
+	BizParams map[string]string `json:"biz_params,omitempty"`
 }
 
 type Parameters struct {
@@ -25,10 +27,13 @@ type Parameters struct {
 	Temperature       *float64     `json:"temperature,omitempty"`
 	ResultFormat      string       `json:"result_format,omitempty"`
 	Tools             []model.Tool `json:"tools,omitempty"`
+	RagOptions        *struct {
+		PipelineIds []string `json:"pipeline_ids,omitempty"`
+	} `json:"rag_options,omitempty"`
 }
 
 type ChatRequest struct {
-	Model      string     `json:"model"`
+	Model      string     `json:"model,omitempty"`
 	Input      Input      `json:"input"`
 	Parameters Parameters `json:"parameters,omitempty"`
 }
@@ -145,6 +150,8 @@ type Output struct {
 	//Text         string                      `json:"text"`
 	//FinishReason string                      `json:"finish_reason"`
 	Choices []openai.TextResponseChoice `json:"choices"`
+	Text    *string                     `json:"text,omitempty"`
+	FinishReason *string                `json:"finish_reason,omitempty"`
 }
 
 type ChatResponse struct {

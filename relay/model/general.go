@@ -66,6 +66,13 @@ type GeneralOpenAIRequest struct {
 	// Others
 	Instruction string `json:"instruction,omitempty"`
 	NumCtx      int    `json:"num_ctx,omitempty"`
+	MemoryId *string `json:"memory_id,omitempty"`
+	BizParams map[string]string `json:"biz_params,omitempty"`
+	DashScopeParameters *struct {
+		RagOptions *struct {
+			PipelineIds []string `json:"pipeline_ids,omitempty"`
+		} `json:"rag_options,omitempty"`
+	} `json:"dashscope_parameters,omitempty"`
 }
 
 func (r GeneralOpenAIRequest) ParseInput() []string {

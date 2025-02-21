@@ -39,6 +39,7 @@ const EditChannel = () => {
   };
 
   const originInputs = {
+    app_id: '',
     name: '',
     type: 1,
     key: '',
@@ -640,6 +641,23 @@ const EditChannel = () => {
                 />
               </Form.Field>
             )}
+            {
+              inputs.type === 17 &&
+                (
+                  <Form.Field>
+                    <Form.Input
+                      label='App ID'
+                      name='app_id'
+                      placeholder={
+                        '请输入 App ID'
+                      }
+                      onChange={handleConfigChange}
+                      value={config.app_id}
+                      autoComplete=''
+                    />
+                  </Form.Field>
+                )
+            }
             {inputs.type !== 33 && !isEdit && (
               <Form.Checkbox
                 checked={batch}

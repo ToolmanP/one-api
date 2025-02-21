@@ -48,6 +48,7 @@ type ChannelConfig struct {
 	APIVersion        string `json:"api_version,omitempty"`
 	LibraryID         string `json:"library_id,omitempty"`
 	Plugin            string `json:"plugin,omitempty"`
+	AppId             string `json:"app_id,omitempty"`
 	VertexAIProjectID string `json:"vertex_ai_project_id,omitempty"`
 	VertexAIADC       string `json:"vertex_ai_adc,omitempty"`
 }

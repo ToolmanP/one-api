@@ -24,13 +24,17 @@ func (a *Adaptor) Init(meta *meta.Meta) {
 
 func (a *Adaptor) GetRequestURL(meta *meta.Meta) (string, error) {
 	fullRequestURL := ""
-	switch meta.Mode {
-	case relaymode.Embeddings:
-		fullRequestURL = fmt.Sprintf("%s/api/v1/services/embeddings/text-embedding/text-embedding", meta.BaseURL)
-	case relaymode.ImagesGenerations:
-		fullRequestURL = fmt.Sprintf("%s/api/v1/services/aigc/text2image/image-synthesis", meta.BaseURL)
-	default:
-		fullRequestURL = fmt.Sprintf("%s/api/v1/services/aigc/text-generation/generation", meta.BaseURL)
+	if meta.Config.AppId == "" {
+		switch meta.Mode {
+		case relaymode.Embeddings:
+			fullRequestURL = fmt.Sprintf("%s/api/v1/services/embeddings/text-embedding/text-embedding", meta.BaseURL)
+		case relaymode.ImagesGenerations:
+			fullRequestURL = fmt.Sprintf("%s/api/v1/services/aigc/text2image/image-synthesis", meta.BaseURL)
+		default:
+			fullRequestURL = fmt.Sprintf("%s/api/v1/services/aigc/text-generation/generation", meta.BaseURL)
+		}
+	} else {
+		fullRequestURL = fmt.Sprintf("%s/api/v1/apps/%s/completion", meta.BaseURL, meta.Config.AppId)
 	}
 
 	return fullRequestURL, nil
@@ -54,6 +58,7 @@ func (a *Adaptor) SetupRequestHeader(c *gin.Context, req *http.Request, meta *me
 }
 
 func (a *Adaptor) ConvertRequest(c *gin.Context, relayMode int, request *model.GeneralOpenAIRequest) (any, error) {
+	meta := meta.GetByContext(c)
 	if request == nil {
 		return nil, errors.New("request is nil")
 	}
@@ -62,7 +67,7 @@ func (a *Adaptor) ConvertRequest(c *gin.Context, relayMode int, request *model.G
 		aliEmbeddingRequest := ConvertEmbeddingRequest(*request)
 		return aliEmbeddingRequest, nil
 	default:
-		aliRequest := ConvertRequest(*request)
+		aliRequest := ConvertRequest(meta, *request)
 		return aliRequest, nil
 	}
 }

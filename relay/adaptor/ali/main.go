@@ -3,17 +3,19 @@ package ali
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/songquanpeng/one-api/common/ctxkey"
-	"github.com/songquanpeng/one-api/common/render"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/songquanpeng/one-api/common/ctxkey"
+	"github.com/songquanpeng/one-api/common/render"
 
 	"github.com/gin-gonic/gin"
 	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/helper"
 	"github.com/songquanpeng/one-api/common/logger"
 	"github.com/songquanpeng/one-api/relay/adaptor/openai"
+	"github.com/songquanpeng/one-api/relay/meta"
 	"github.com/songquanpeng/one-api/relay/model"
 )
 
@@ -21,7 +23,7 @@ import (
 
 const EnableSearchModelSuffix = "-internet"
 
-func ConvertRequest(request model.GeneralOpenAIRequest) *ChatRequest {
+func ConvertRequest(meta *meta.Meta, request model.GeneralOpenAIRequest) *ChatRequest {
 	messages := make([]Message, 0, len(request.Messages))
 	for i := 0; i < len(request.Messages); i++ {
 		message := request.Messages[i]
@@ -37,8 +39,8 @@ func ConvertRequest(request model.GeneralOpenAIRequest) *ChatRequest {
 		aliModel = strings.TrimSuffix(aliModel, EnableSearchModelSuffix)
 	}
 	request.TopP = helper.Float64PtrMax(request.TopP, 0.9999)
-	return &ChatRequest{
-		Model: aliModel,
+
+	r := &ChatRequest{
 		Input: Input{
 			Messages: messages,
 		},
@@ -54,6 +56,19 @@ func ConvertRequest(request model.GeneralOpenAIRequest) *ChatRequest {
 			Tools:             request.Tools,
 		},
 	}
+
+	if meta.Config.AppId != "" {
+		r.Input.BizParams = request.BizParams
+		r.Input.MemoryId = request.MemoryId
+		if request.DashScopeParameters != nil {
+			r.Parameters.RagOptions = request.DashScopeParameters.RagOptions
+		}
+		r.Parameters.ResultFormat = "message"
+	} else {
+		r.Model = aliModel
+	}
+
+	return r
 }
 
 func ConvertEmbeddingRequest(request model.GeneralOpenAIRequest) *EmbeddingRequest {
@@ -137,12 +152,26 @@ func responseAli2OpenAI(response *ChatResponse) *openai.TextResponse {
 		Id:      response.RequestId,
 		Object:  "chat.completion",
 		Created: helper.GetTimestamp(),
-		Choices: response.Output.Choices,
 		Usage: model.Usage{
 			PromptTokens:     response.Usage.InputTokens,
 			CompletionTokens: response.Usage.OutputTokens,
 			TotalTokens:      response.Usage.InputTokens + response.Usage.OutputTokens,
 		},
+	}
+	if response.Output.Text != nil {
+		fullTextResponse.Choices = []openai.TextResponseChoice{
+			{
+				Index:        0,
+				FinishReason: *response.Output.FinishReason,
+				Message: model.Message{
+					Role:    "assistant",
+					Content: *response.Output.Text,
+				},
+			},
+		}
+
+	} else {
+		fullTextResponse.Choices = response.Output.Choices
 	}
 	return &fullTextResponse
 }
