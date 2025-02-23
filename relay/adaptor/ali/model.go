@@ -144,14 +144,19 @@ type Usage struct {
 	InputTokens  int `json:"input_tokens"`
 	OutputTokens int `json:"output_tokens"`
 	TotalTokens  int `json:"total_tokens"`
+	Models       []struct {
+		Output_tokens int    `json:"output_tokens"`
+		Model_id      string `json:"model_id"`
+		Input_tokens  int    `json:"input_tokens"`
+	} `json:"models"`
 }
 
 type Output struct {
 	//Text         string                      `json:"text"`
 	//FinishReason string                      `json:"finish_reason"`
-	Choices []openai.TextResponseChoice `json:"choices"`
-	Text    *string                     `json:"text,omitempty"`
-	FinishReason *string                `json:"finish_reason,omitempty"`
+	Choices      []openai.TextResponseChoice `json:"choices"`
+	Text         *string                     `json:"text,omitempty"`
+	FinishReason *string                     `json:"finish_reason,omitempty"`
 }
 
 type ChatResponse struct {

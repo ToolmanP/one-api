@@ -152,11 +152,6 @@ func responseAli2OpenAI(response *ChatResponse) *openai.TextResponse {
 		Id:      response.RequestId,
 		Object:  "chat.completion",
 		Created: helper.GetTimestamp(),
-		Usage: model.Usage{
-			PromptTokens:     response.Usage.InputTokens,
-			CompletionTokens: response.Usage.OutputTokens,
-			TotalTokens:      response.Usage.InputTokens + response.Usage.OutputTokens,
-		},
 	}
 	if response.Output.Text != nil {
 		fullTextResponse.Choices = []openai.TextResponseChoice{
@@ -169,9 +164,20 @@ func responseAli2OpenAI(response *ChatResponse) *openai.TextResponse {
 				},
 			},
 		}
-
+		usage := model.Usage{}
+		for _, model := range(response.Usage.Models) {
+			usage.PromptTokens += model.Input_tokens
+			usage.CompletionTokens += model.Output_tokens
+		}
+		usage.TotalTokens = usage.PromptTokens + usage.CompletionTokens
+		fullTextResponse.Usage = usage
 	} else {
 		fullTextResponse.Choices = response.Output.Choices
+		fullTextResponse.Usage = model.Usage{
+			PromptTokens:     response.Usage.InputTokens,
+			CompletionTokens: response.Usage.OutputTokens,
+			TotalTokens:      response.Usage.InputTokens + response.Usage.OutputTokens,
+		}
 	}
 	return &fullTextResponse
 }
@@ -205,6 +211,7 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 			return 0, nil, nil
 		}
 		if i := strings.Index(string(data), "\n"); i >= 0 {
+
 			return i + 1, data[0:i], nil
 		}
 		if atEOF {
